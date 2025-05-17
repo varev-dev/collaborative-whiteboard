@@ -20,7 +20,9 @@ DLList*  dllist_create();
 void     dllist_destroy(DLList **list);
 void     dllist_clear(DLList *list, void(*free_func)(void*));
 void     dllist_push(DLList *list, void *data);
+void     dllist_pushfront(DLList *list, void *data);
 void*    dllist_pop(DLList *list);
+void*    dllist_popfront(DLList *list);
 void     dllist_foreach(DLList *list, void(*func)(void*));
 
 // cmp_func must return 0 if elements match
