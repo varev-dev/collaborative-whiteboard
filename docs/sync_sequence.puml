@@ -1,0 +1,57 @@
+@startuml
+actor U1 as "Użytkownik (tworzący)"
+actor U2 as "Użytkownik (dołączający)"
+participant Serwer
+participant Kolejka
+
+== Tworzenie tablicy ==
+U1 -> Serwer: Tworzenie tablicy
+activate Serwer
+activate U1
+Serwer --> U1: czyTablicaUtworzona?
+deactivate Serwer
+
+alt czyTablicaUtworzona? = true
+
+    == Dołączanie użytkownika ==
+    activate U2
+    U2 -> Serwer: Dołączanie kodem
+    activate Serwer
+    Serwer --> U2: czyUżytkownikPołączony?
+
+    alt czyUżytkownikPołączony? = true
+        Serwer -> U2: Przesłanie stanu tablicy
+        U2 --> Serwer: czyStanPrzesłany?
+
+        alt czyStanPrzesłany? = true
+            deactivate Serwer
+
+            == Przesyłanie zmian od użytkownika ==
+            U1 -> Serwer: Przesłanie dokonanych zmian
+            activate Serwer
+            Serwer --> U2: czyZmianyPrzesłane?
+
+            alt czyZmianyPrzesłane? = true
+                Serwer -> Kolejka: Dodanie zmian do kolejki
+                activate Kolejka
+                Kolejka --> Serwer: czyZmianyDodane?
+
+                alt czyZmianyDodane? = true
+                    loop Synchronizacja stanu serwera
+                        Kolejka --> Serwer: Przesyłanie zmian z kolejki do tablicy serwera
+                    end
+                    deactivate Kolejka
+
+                    loop Synchronizacja stanu użytkowników
+                        Serwer --> U2: Przesyłanie zmian z serwera do tablicy użytkownika
+                    end
+                end
+            end
+        end
+    end
+end
+
+deactivate Serwer
+deactivate U1
+deactivate U2
+@enduml
