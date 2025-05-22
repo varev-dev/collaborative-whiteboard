@@ -137,7 +137,7 @@ void* dllist_find(DLList *list, void *data, int(*cmp_func)(void*, void*)) {
     return curr->data;
 }
 
-void dllist_foreach(DLList *list, void(*func)(void*)) {
+void dllist_foreach(DLList *list, void(*func)(void*, void*), void *arg2) {
     if (list == NULL || list->size == 0 || func == NULL) {
         return;
     }
@@ -145,12 +145,12 @@ void dllist_foreach(DLList *list, void(*func)(void*)) {
     Node *curr = list->head;
 
     while (curr != NULL) {
-        func(curr->data);
+        func(curr->data, arg2);
         curr = curr->next;
     }
 }
 
-void dllist_clear(DLList *list, void(*free_func)(void*)) {
+void dllist_clear(DLList *list, void(*free_func)(void*, void*), void *arg2) {
     if (list == NULL || list->size == 0 || free_func == NULL) {
         return;
     }
@@ -161,7 +161,7 @@ void dllist_clear(DLList *list, void(*free_func)(void*)) {
         prev = curr;
         curr = curr->next;
 
-        free_func(prev->data);
+        free_func(prev->data, arg2);
         free(prev);
     }
 
