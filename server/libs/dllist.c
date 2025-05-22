@@ -54,6 +54,23 @@ void dllist_push(DLList *list, void *data) {
     list->size++;
 }
 
+void dllist_pushfront(DLList *list, void *data) {
+    if (list == NULL) {
+        return;
+    }
+
+    Node *front = malloc(sizeof(Node));
+    if (front == NULL) {
+        return;
+    }
+
+    front->data = data;
+    front->prev = NULL;
+    front->next = list->head;
+    list->head->prev = front;
+    list->head = front;
+}
+
 void* dllist_remove(DLList *list, void *data, int(*cmp_func)(void*, void*)) {
     if (list == NULL || list->size == 0 || cmp_func == NULL) {
         return NULL;
@@ -115,6 +132,28 @@ void* dllist_pop(DLList *list) {
     }
 
     free(tail);
+
+    return data;
+}
+
+void* dllist_popfront(DLList *list) {
+    if (list == NULL || list->size == 0) {
+        return NULL;
+    }
+
+    Node* front = list->head;
+    void* data = list->head->data;
+
+    list->head = list->head->next;
+    if (list->head != NULL) {
+        list->head->prev = NULL;
+
+        if (list->head == list->tail) {
+            list->tail = NULL;
+        }
+    }
+
+    free(front);
 
     return data;
 }
