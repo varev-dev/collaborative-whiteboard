@@ -3,18 +3,18 @@
 
 #include <stdbool.h>
 
-#define BUFFER_SIZE 4096
+typedef struct buffer Buffer;
 
 typedef struct connection {
     unsigned int id;
     int          fd;
-    char         readbuf[BUFFER_SIZE];
-    char         writebuf[BUFFER_SIZE];
+    Buffer      *readbuf;
+    Buffer      *writebuf;
     bool         should_close;
 } Connection;
 
 Connection* connection_create(int socket);
-void        connection_close(Connection **conn);
+void        connection_free(Connection **conn);
 int         connection_cmp(void *a, void *b);
 
 #endif //CONNECTION_H
