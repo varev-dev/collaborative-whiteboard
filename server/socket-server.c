@@ -10,12 +10,14 @@
 #include "utils.h"
 #include "dllist.h"
 #include "board.h"
+#include "buffer.h"
 #include "connection.h"
 #include "server.h"
 
 int main() {
 	// create server
 	Server *s = server_create(htonl(INADDR_ANY), 5000);
+	char temp_buf[TEMP_BUFFER_SIZE];
 
 	while (true) {
 		// wait for events
@@ -44,7 +46,7 @@ int main() {
 
 				// add connection to server
 				if (server_add_connection(s, c) == -1) {
-					connection_close(&c);
+					connection_free(&c);
 				}
 
 				if (c != NULL) {
@@ -61,24 +63,15 @@ int main() {
 				Connection *c = s->events[i].data.ptr;
 
 				// read from connection
-				size_t size = read(c->fd, c->readbuf, BUFFER_SIZE - 1);
+				size_t size = read(c->fd, temp_buf, TEMP_BUFFER_SIZE - 1);
 				if (size == -1) {
 					error("Reading from socket: %s\n", ERRNO_STR);
 					continue;
 				}
 
-				c->readbuf[size] = '\0';
+				buffer_append(c->readbuf, temp_buf, size);
 				// decode message
 				// (create session, join session, update board, get board)
-
-				memcpy(c->writebuf, c->readbuf, size + 1);
-				for (int i = 0; i < size; i++) {
-					if (c->writebuf[i] >= 'a' && c->writebuf[i] <= 'z') {
-						c->writebuf[i] -= 32;
-					}
-				}
-
-				server_set_connection_mode(s, c, READ | WRITE);
 			}
 
 			if (s->events[i].events & WRITE) {
@@ -88,17 +81,20 @@ int main() {
 				Connection *c = s->events[i].data.ptr;
 
 				// write to connection
-				size_t size = write(c->fd, c->writebuf, strlen(c->writebuf));
+				size_t size = write(c->fd, c->writebuf->data_end, strlen((const char*)c->writebuf->data_begin));
 				if (size == -1) {
 					error("Writing to socket: %s\n", ERRNO_STR);
 					continue;
 				}
 
-				server_set_connection_mode(s, c, READ);
+				buffer_consume(c->writebuf, size);
+				if (buffer_isempty(c->writebuf)) {
+					server_set_connection_mode(s, c, READ);
+				}
 			}
 			// if close
 		}
 	}
 
-	server_destroy(&s);
+	server_free(&s);
 }
