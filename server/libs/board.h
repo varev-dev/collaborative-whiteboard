@@ -12,7 +12,7 @@ typedef struct board {
 } Board;
 
 Board* board_create(unsigned int rows, unsigned int cols);
-void   board_destroy(Board **board);
-void   board_print(Board *board);
+void   board_free(Board **board);
+void   board_print(const Board *board);
 
 #endif //BOARD_H

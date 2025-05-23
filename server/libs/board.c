@@ -1,5 +1,7 @@
 #include "board.h"
 #include "utils.h"
+
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -22,7 +24,7 @@ Board* board_create(unsigned int rows, unsigned int cols) {
     for (int i = 0; i < rows; i++) {
         board->data[i] = malloc(cols * sizeof(Color));
         if (board->data[i] == NULL) {
-            board_destroy(&board);
+            board_free(&board);
             return NULL;
         }
 
@@ -32,8 +34,10 @@ Board* board_create(unsigned int rows, unsigned int cols) {
     return board;
 }
 
-void board_destroy(Board **board) {
-    if (board == NULL || *board == NULL) {
+void board_free(Board **board) {
+    assert(board != NULL);
+
+    if (*board == NULL) {
         return;
     }
 
@@ -49,11 +53,8 @@ void board_destroy(Board **board) {
     *board = NULL;
 }
 
-void board_print(Board *board) {
-    if (board == NULL || board->data == NULL) {
-        error("Trying to print a NULL board");
-        return;
-    }
+void board_print(const Board *board) {
+    assert(board != NULL && board->data != NULL);
 
     for (int i = 0; i < board->rows; i++) {
         for (int j = 0; j < board->cols; j++) {

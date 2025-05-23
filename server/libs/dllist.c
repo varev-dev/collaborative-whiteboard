@@ -1,21 +1,21 @@
 #include "dllist.h"
 
+#include <assert.h>
+
 DLList* dllist_create() {
-    DLList *list = malloc(sizeof(DLList));
-    if (list == NULL) {
+    DLList *l = malloc(sizeof(DLList));
+    if (l == NULL) {
         return NULL;
     }
 
-    list->tail = list->head = NULL;
-    list->size = 0;
+    l->tail = l->head = NULL;
+    l->size = 0;
 
-    return list;
+    return l;
 }
 
-void dllist_destroy(DLList **list) {
-    if (list == NULL || *list == NULL) {
-        return;
-    }
+void dllist_free(DLList **list) {
+    assert(list != NULL && *list != NULL);
 
     Node *prev, *curr = (*list)->head;
 
@@ -29,35 +29,31 @@ void dllist_destroy(DLList **list) {
     *list = NULL;
 }
 
-void dllist_push(DLList *list, void *data) {
-    if (list == NULL) {
-        return;
-    }
+void dllist_push(DLList *l, void *data) {
+    assert(l != NULL);
 
     Node *node = malloc(sizeof(Node));
     node->data = data;
     node->next = NULL;
 
-    if (list->head == NULL) {
-        list->head = node;
+    if (l->head == NULL) {
+        l->head = node;
         node->prev = NULL;
-    } else if (list->tail == NULL) {
-        list->tail = node;
-        node->prev = list->head;
-        list->head->next = list->tail;
+    } else if (l->tail == NULL) {
+        l->tail = node;
+        node->prev = l->head;
+        l->head->next = l->tail;
     } else {
-        list->tail->next = node;
-        node->prev = list->tail;
-        list->tail = node;
+        l->tail->next = node;
+        node->prev = l->tail;
+        l->tail = node;
     }
 
-    list->size++;
+    l->size++;
 }
 
-void dllist_pushfront(DLList *list, void *data) {
-    if (list == NULL) {
-        return;
-    }
+void dllist_pushfront(DLList *l, void *data) {
+    assert(l != NULL);
 
     Node *front = malloc(sizeof(Node));
     if (front == NULL) {
@@ -66,17 +62,20 @@ void dllist_pushfront(DLList *list, void *data) {
 
     front->data = data;
     front->prev = NULL;
-    front->next = list->head;
-    list->head->prev = front;
-    list->head = front;
+    front->next = l->head;
+    l->head->prev = front;
+    l->head = front;
+    l->size++;
 }
 
-void* dllist_remove(DLList *list, void *data, int(*cmp_func)(void*, void*)) {
-    if (list == NULL || list->size == 0 || cmp_func == NULL) {
+void* dllist_remove(DLList *l, void *data, int(*cmp_func)(void*, void*)) {
+    assert(l != NULL && cmp_func != NULL);
+
+    if (l->size == 0) {
         return NULL;
     }
 
-    Node *curr = list->head;
+    Node *curr = l->head;
 
     while (curr != NULL && cmp_func(curr->data, data) != 0) {
         curr = curr->next;
@@ -90,45 +89,47 @@ void* dllist_remove(DLList *list, void *data, int(*cmp_func)(void*, void*)) {
     if (curr->prev != NULL) {
         curr->prev->next = curr->next;
     } else {
-        list->head = curr->next;
+        l->head = curr->next;
     }
 
     if (curr->next != NULL) {
         curr->next->prev = curr->prev;
     } else {
-        list->tail = curr->prev;
+        l->tail = curr->prev;
     }
 
     free(curr);
-    list->size--;
+    l->size--;
 
     return d;
 }
 
 
-void* dllist_pop(DLList *list) {
-    if (list == NULL || list->size == 0) {
+void* dllist_pop(DLList *l) {
+    assert(l != NULL);
+
+    if (l->size == 0) {
         return NULL;
     }
 
     void *data;
-    list->size--;
+    l->size--;
 
-    if (list->tail == NULL) {
-        data = list->head->data;
-        free(list->head);
-        list->head = NULL;
+    if (l->tail == NULL) {
+        data = l->head->data;
+        free(l->head);
+        l->head = NULL;
         return data;
     }
 
-    Node *tail = list->tail;
+    Node *tail = l->tail;
     data = tail->data;
     tail->prev->next = NULL;
 
-    if (list->size == 1) {
-        list->tail = NULL;
+    if (l->size == 1) {
+        l->tail = NULL;
     } else {
-        list->tail = tail->prev;
+        l->tail = tail->prev;
     }
 
     free(tail);
@@ -136,34 +137,39 @@ void* dllist_pop(DLList *list) {
     return data;
 }
 
-void* dllist_popfront(DLList *list) {
-    if (list == NULL || list->size == 0) {
+void* dllist_popfront(DLList *l) {
+    assert(l != NULL);
+
+    if (l->size == 0) {
         return NULL;
     }
 
-    Node* front = list->head;
-    void* data = list->head->data;
+    Node* front = l->head;
+    void* data = l->head->data;
 
-    list->head = list->head->next;
-    if (list->head != NULL) {
-        list->head->prev = NULL;
+    l->head = l->head->next;
+    if (l->head != NULL) {
+        l->head->prev = NULL;
 
-        if (list->head == list->tail) {
-            list->tail = NULL;
+        if (l->head == l->tail) {
+            l->tail = NULL;
         }
     }
 
+    l->size--;
     free(front);
 
     return data;
 }
 
-void* dllist_find(DLList *list, void *data, int(*cmp_func)(void*, void*)) {
-    if (list == NULL || list->size == 0 || cmp_func == NULL) {
+void* dllist_find(DLList *l, void *data, int(*cmp_func)(void*, void*)) {
+    assert(l != NULL && cmp_func != NULL);
+
+    if (l->size == 0) {
         return NULL;
     }
 
-    Node* curr = list->head;
+    Node* curr = l->head;
 
     while (curr != NULL && cmp_func(curr->data, data) != 0) {
         curr = curr->next;
@@ -176,12 +182,14 @@ void* dllist_find(DLList *list, void *data, int(*cmp_func)(void*, void*)) {
     return curr->data;
 }
 
-void dllist_foreach(DLList *list, void(*func)(void*, void*), void *arg2) {
-    if (list == NULL || list->size == 0 || func == NULL) {
+void dllist_foreach(DLList *l, void(*func)(void*, void*), void *arg2) {
+    assert(l != NULL && func != NULL);
+
+    if (l->size == 0) {
         return;
     }
 
-    Node *curr = list->head;
+    Node *curr = l->head;
 
     while (curr != NULL) {
         func(curr->data, arg2);
@@ -189,12 +197,14 @@ void dllist_foreach(DLList *list, void(*func)(void*, void*), void *arg2) {
     }
 }
 
-void dllist_clear(DLList *list, void(*free_func)(void*, void*), void *arg2) {
-    if (list == NULL || list->size == 0 || free_func == NULL) {
+void dllist_clear(DLList *l, void(*free_func)(void*, void*), void *arg2) {
+    assert(l != NULL && free_func != NULL);
+
+    if (l->size == 0) {
         return;
     }
 
-    Node *prev, *curr = list->head;
+    Node *prev, *curr = l->head;
 
     while (curr != NULL) {
         prev = curr;
@@ -204,6 +214,6 @@ void dllist_clear(DLList *list, void(*free_func)(void*, void*), void *arg2) {
         free(prev);
     }
 
-    list->head = NULL;
-    list->tail = NULL;
+    l->head = NULL;
+    l->tail = NULL;
 }
